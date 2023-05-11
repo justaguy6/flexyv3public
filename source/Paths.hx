@@ -69,8 +69,8 @@ class Paths
 		var folders:Array<String>=[];
 		// TODO: openflassets shit maybe?
 		#if sys
-		for(folder in FileSystem.readDirectory('${base}/${library}') ){
-			if(!folder.contains(".") && FileSystem.isDirectory('${base}/${library}/${folder}')){
+		for(folder in HSys.readDirectory('${base}/${library}') ){
+			if(!folder.contains(".") && OpenFlAssets.exists('${base}/${library}/${folder}')){
 				folders.push(folder);
 			}
 		}
@@ -88,15 +88,8 @@ class Paths
 		if(OpenFlAssets.exists(path)){
 			return Json.parse(OpenFlAssets.getText(path));
 		}
-		#if sys
-		else if(FileSystem.exists(path)){
-			return Json.parse(File.getContent(path));
-		}
+		Json.parse(OpenFlAssets.getText('assets/images/${library}/fallback/metadata.json'));
 		
-		return Json.parse(File.getContent('assets/images/${library}/fallback/metadata.json'));
-		#else
-		return Json.parse(OpenFlAssets.getText('assets/images/${library}/fallback/metadata.json'));
-		#end
 	}
 
 	public static function noteSkinPath(key:String, ?library:String='skins', ?skin:String='default', modifier:String='base', noteType:String='default', ?useOpenFLAssetSystem:Bool=true):String
@@ -152,32 +145,7 @@ class Paths
 			Cache.pathCache.set(internalName,path);
 			return path;
 		}
-		#if sys
-		else{
-			if(noteType!='' && noteType!='default'){
-				while(idx<pathsNotetype.length){
-					path = pathsNotetype[idx];
-					if(FileSystem.exists(path))
-						break;
-
-					idx++;
-				}
-				trace(path);
-			}else{
-				while(idx<pathsNoNotetype.length){
-					path = pathsNoNotetype[idx];
-					if(FileSystem.exists(path))
-						break;
-
-					idx++;
-				}
-				trace(path);
-			}
-
-			Cache.pathCache.set(internalName,path);
-			return path;
-		}
-		#end
+		
 		return '';
 	}
 
@@ -190,25 +158,7 @@ class Paths
 				return noteSkinImage(key,library,skin,modifier,noteType,false);
 			}
 		}
-		#if sys
-		else{
-			var bitmapName:String = '${key}-${library}-${skin}-${modifier}-${noteType}';
-			var doShit=FlxG.bitmap.checkCache(bitmapName);
-			if(!doShit){
-				var pathPng = noteSkinPath('${key}.png',library,skin,modifier,noteType,useOpenFLAssetSystem);
-				var image:Null<BitmapData>=null;
-				if(FileSystem.exists(pathPng)){
-					doShit=true;
-					image = BitmapData.fromFile(pathPng);
-					FlxG.bitmap.add(image,false,bitmapName);
-				}
-				if(image!=null)
-					return image;
-			}else
-				return FlxG.bitmap.get(bitmapName);
-
-		}
-		#end
+		
 		return image('skins/fallback/base/$key','preload');
 	}
 
@@ -221,14 +171,7 @@ class Paths
 				return noteSkinText(key,library,skin,modifier,noteType,false);
 			}
 		}
-		#if sys
-		else{
-			var path = noteSkinPath('${key}',library,skin,modifier,noteType,useOpenFLAssetSystem);
-			if(FileSystem.exists(path)){
-				return Cache.getText(path);
-			}
-		}
-		#end
+		
 		return OpenFlAssets.getText(file('images/skins/fallback/base/$key','preload'));
 	}
 
@@ -248,25 +191,7 @@ class Paths
 			}
 			#end
 		}
-		#if sys
-		else{
-			var xmlData = Cache.getXML(noteSkinPath('${key}.xml',library,skin,modifier,noteType,useOpenFLAssetSystem));
-			if(xmlData!=null){
-				var bitmapName:String = '${key}-${library}-${skin}-${modifier}-${noteType}';
-				var doShit=true;
-				if(!FlxG.bitmap.checkCache(bitmapName)){
-					doShit=false;
-					var pathPng = noteSkinPath('${key}.png',library,skin,modifier,noteType,useOpenFLAssetSystem);
-					if(FileSystem.exists(pathPng)){
-						doShit=true;
-						FlxG.bitmap.add(BitmapData.fromFile(pathPng),false,bitmapName);
-					}
-				}
-				if(doShit)
-					return FlxAtlasFrames.fromSparrow(FlxG.bitmap.get(bitmapName),xmlData);
-			}
-		}
-		#end
+		
 		return getSparrowAtlas('skins/fallback/base/$key','preload');
 	}
 
@@ -316,7 +241,7 @@ class Paths
 		var suffixes = ["","-hard","-easy","-erect"];
 		for(suffix in suffixes){
 			var c = chart('$key$suffix', container, library);
-			#if sys
+			#if desktop 
 			if(c!=null && c.trim()!='' && FileSystem.exists(c)){
 			#else	
 			if (c != null && c.trim() != '' && OpenFlAssets.exists(c))
